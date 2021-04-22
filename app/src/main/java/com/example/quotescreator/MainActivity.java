@@ -1,11 +1,18 @@
 package com.example.quotescreator;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,10 +22,12 @@ import static android.widget.LinearLayout.VERTICAL;
 
 public class MainActivity extends AppCompatActivity {
     private RecyclerView rcv;
+    private  int STORAGE_PERMISSION_CODE=1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        requestPermission();
 
         List<Quotes>quotes=new ArrayList<>();
         quotes.add(new Quotes ("\"All our dreams can come true, if we have the courage to pursue them.\"", "– Walt Disney"));
@@ -31,11 +40,6 @@ public class MainActivity extends AppCompatActivity {
         quotes.add(new Quotes("\"Failure Will Never Overtake Me If My Determination To Succeed Is Strong Enough.”" ,"– Og Mandino"));
         quotes.add(new Quotes("\"Entrepreneurs Are Great At Dealing With Uncertainty And Also Very Good At Minimizing Risk. That’s The Classic Entrepreneur\".","– Mohnish Pabrai"));
         quotes.add(new Quotes("\"If You Are Working On Something That You Really Care About, You Don’t Have To Be Pushed. The Vision Pulls You.”"," – Steve Jobs"));
-        quotes.add(new Quotes("\"If You Are Working On Something That You Really Care About, You Don’t Have To Be Pushed. The Vision Pulls You.” ","– Steve Jobs"));
-        quotes.add(new Quotes("\"If You Are Working On Something That You Really Care About, You Don’t Have To Be Pushed. The Vision Pulls You.” ","– Steve Jobs"));
-        quotes.add(new Quotes("\"If You Are Working On Something That You Really Care About, You Don’t Have To Be Pushed. The Vision Pulls You.” ","– Steve Jobs"));
-        quotes.add(new Quotes("\"If You Are Working On Something That You Really Care About, You Don’t Have To Be Pushed. The Vision Pulls You.” ","– Steve Jobs"));
-        quotes.add(new Quotes("\"If You Are Working On Something That You Really Care About, You Don’t Have To Be Pushed. The Vision Pulls You.” ","– Steve Jobs"));
         quotes.add(new Quotes("\"We May Encounter Many Defeats But We Must Not Be Defeated.”"," – Maya Angelou"));
         quotes.add(new Quotes("\"Imagine Your Life Is Perfect In Every Respect; What Would It Look Like?”"," – Brian Tracy"));
         quotes.add(new Quotes("\"We Generate Fears While We Sit. We Overcome Them By Action.”"," – Dr. Henry Link"));
@@ -59,5 +63,34 @@ public class MainActivity extends AppCompatActivity {
         MyAdapter mAdapter=new MyAdapter(this,quotes);
         rcv.setAdapter(mAdapter);
     }
+    // method for requesting permission
+    public void requestPermission(){
+        if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)){
+            new AlertDialog.Builder(this)
+                    .setTitle("Permission needed")
+                    .setMessage("This Permission is need for sharing images")
+                    .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    }).create().show();
+        }
+        else{
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},STORAGE_PERMISSION_CODE);
+        }
+    }
 
+    // method for checking permission results
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == STORAGE_PERMISSION_CODE)  {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Permission GRANTED", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 }
+

@@ -1,16 +1,24 @@
 package com.example.quotescreator;
 
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -21,6 +29,7 @@ import android.widget.Toast;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.squareup.picasso.Picasso;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -29,14 +38,17 @@ import java.io.IOException;
 import yuku.ambilwarna.AmbilWarnaDialog;
 
 public class Features extends AppCompatActivity {
-    ImageView img;
-    TextView txtonImg, txtAuthor, txtImg, txtChangeColor, txtShare;
-    FloatingActionButton fabParent, fabaddImage, fabChangeColor, fabShare;
-    Boolean isAllFabVisible;
-    RelativeLayout relativeLayout;
-    Button btnSave;
-    int SELECT_PICTURE = 200;
-    int defaultColor;
+    private static ImageView img;
+    private static TextView txtonImg, txtAuthor, txtImg, txtChangeColor, txtShare;
+    private static FloatingActionButton fabParent, fabaddImage, fabChangeColor, fabShare;
+    private static Boolean isAllFabVisible;
+    private static RelativeLayout relativeLayout;
+    private static Button btnSave;
+    private static int SELECT_PICTURE = 200;
+    private static int defaultColor;
+    private static final String tag = "Features";
+    private static Uri selectedImageUri;
+    Context inContext;
 
 
     @Override
@@ -49,6 +61,7 @@ public class Features extends AppCompatActivity {
         txtonImg = (TextView) findViewById(R.id.txtOnImage);
         txtAuthor = (TextView) findViewById(R.id.txtAuthorName);
         relativeLayout = (RelativeLayout) findViewById(R.id.relativeLayout);
+
 
         // Registering fabs
         fabParent = (FloatingActionButton) findViewById(R.id.FabParent);
@@ -79,11 +92,12 @@ public class Features extends AppCompatActivity {
         txtAuthor.setTextColor(getResources().getColor(R.color.white));
 
 
-
-        defaultColor= ContextCompat.getColor(Features.this,R.color.design_default_color_primary);
+        defaultColor = ContextCompat.getColor(Features.this, R.color.design_default_color_primary);
 
         // set isAllfabsVisible to false
         isAllFabVisible = false;
+
+
 
         /*we will only make all the fabs and action name visible when the FabParent is
         clicked*/
@@ -134,7 +148,7 @@ public class Features extends AppCompatActivity {
 
             @Override
             public void onClick(View view) {
-               SaveImage(view);
+                SaveImage(view);
             }
         });
 
@@ -172,8 +186,9 @@ public class Features extends AppCompatActivity {
         if (resultCode == RESULT_OK) {
             if (requestCode == SELECT_PICTURE) {
 
-                Uri selectedImageURI = data.getData();
-                Picasso.get().load(selectedImageURI).noPlaceholder().centerCrop().fit()
+                selectedImageUri = data.getData();
+
+                Picasso.get().load(selectedImageUri).noPlaceholder().centerCrop().fit()
                         .into((ImageView) findViewById(R.id.imgView));
             }
 
@@ -183,49 +198,42 @@ public class Features extends AppCompatActivity {
     // Method to save Image in the Storage.
     public void SaveImage(View view) {
         // coneverting relative layout in image  to save as we have to save image with text written
-        // on it i.e we have to save the whole layout
+        // on it i.e we have to save the whole layou
         Bitmap bitmap = Bitmap.createBitmap(relativeLayout.getWidth(), relativeLayout.getHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         relativeLayout.draw(canvas);
-        FileOutputStream output=null;
         File path = Environment.getExternalStorageDirectory();
         File dir = new File(path.getAbsolutePath(), "/Quotes" + ".jpg");
         dir.mkdir();
-        String Filename=String.format("%d.jpg",System.currentTimeMillis());
-        File Outfile=new File(dir,Filename);
-        FileOutputStream fos = null;
+        String Filename = String.format("%d.jpg", System.currentTimeMillis());
+        File Outfile = new File(dir, Filename);
         try {
-            fos = new FileOutputStream(Outfile);
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-        Toast.makeText(getApplicationContext(),"Image Saved",Toast.LENGTH_SHORT).show();
-        try {
-            fos.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
+            FileOutputStream fos = new FileOutputStream(Outfile);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
             fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        Toast.makeText(getApplicationContext(), "Image Saved", Toast.LENGTH_SHORT).show();
+
 
     }
 
     // create bitmap of layout
-    public Bitmap createdBitmap(){
-        Bitmap bitmap = Bitmap.createBitmap(relativeLayout.getWidth(), relativeLayout.getHeight(), Bitmap.Config.ARGB_8888);
+    public Bitmap createdBitmap(View view) {
+
+        Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         relativeLayout.draw(canvas);
         return bitmap;
     }
 
     //color picker method to change color of text
-    public void openColorPicker(){
-        AmbilWarnaDialog colorPicker=new AmbilWarnaDialog(Features.this, defaultColor, new AmbilWarnaDialog.OnAmbilWarnaListener() {
+    public void openColorPicker() {
+        AmbilWarnaDialog colorPicker = new AmbilWarnaDialog(Features.this, defaultColor, new AmbilWarnaDialog.OnAmbilWarnaListener() {
             @Override
             public void onCancel(AmbilWarnaDialog dialog) {
 
@@ -233,7 +241,7 @@ public class Features extends AppCompatActivity {
 
             @Override
             public void onOk(AmbilWarnaDialog dialog, int color) {
-                defaultColor=color;
+                defaultColor = color;
                 txtonImg.setTextColor(defaultColor);
                 txtAuthor.setTextColor(defaultColor);
 
@@ -244,13 +252,24 @@ public class Features extends AppCompatActivity {
     }
 
     // method for sharing the image
-    public void ShareImage(){
-        Bitmap crtBitmap=createdBitmap();
-        String BitmapPath= MediaStore.Images.Media.insertImage(getContentResolver(),crtBitmap,"title",null);
-        Uri imageUri=Uri.parse(BitmapPath);
-        Intent intent=new Intent(Intent.ACTION_SEND);
-        intent.setType("image/JPEG");
-        intent.putExtra(Intent.EXTRA_STREAM,imageUri);
-        startActivity(Intent.createChooser(intent,"Share By"));
+    public void ShareImage() {
+
+        Bitmap inImage = createdBitmap(relativeLayout);
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(this.getContentResolver(), inImage, "Title", null);
+        if (path == null) {
+            System.out.println("Please add the image to the quote");
+        }
+        Uri imageUri = Uri.parse(path);
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("image/*");
+        intent.putExtra(Intent.EXTRA_STREAM, imageUri);
+        startActivity(Intent.createChooser(intent, "Share By"));
     }
 }
+
+
+
+
+
